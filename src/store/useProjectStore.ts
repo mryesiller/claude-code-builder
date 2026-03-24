@@ -23,6 +23,8 @@ import {
   MemoryData,
   ToolData,
   TeamData,
+  CommandData,
+  LogData,
 } from '@/lib/types';
 import { createDefaultNodeData, getDefaultLabel, getNextId } from '@/lib/templates';
 import { isValidConnection } from '@/lib/connectionRules';
@@ -283,5 +285,74 @@ function applyConnectionSideEffect(
         agentNames: [...team.agentNames, agent.name],
       } as Partial<TeamData>);
     }
+  }
+
+  // Auto-update agent persona when any node connects to it
+  if (targetType === 'agent') {
+    // Use setTimeout to let the config updates settle first
+    setTimeout(() => {
+      rebuildAgentPersona(targetNode.id, get);
+    }, 0);
+  }
+}
+
+// --- Rebuild agent persona based on all connections ---
+function rebuildAgentPersona(
+  agentId: string,
+  get: () => ProjectStore,
+) {
+  const { nodes, edges } = get();
+  const agentNode = nodes.find((n) => n.id === agentId);
+  if (!agentNode) return;
+
+  const agent = agentNode.data.config as AgentData;
+  const incoming = edges
+    .filter((e) => e.target === agentId)
+    .map((e) => nodes.find((n) => n.id === e.source))
+    .filter(Boolean) as AppNode[];
+
+  const skills = incoming.filter((n) => n.data.nodeType === 'skill');
+  const mcps = incoming.filter((n) => n.data.nodeType === 'mcp');
+  const hooks = incoming.filter((n) => n.data.nodeType === 'hook');
+  const tools = incoming.filter((n) => n.data.nodeType === 'tool');
+  const memories = incoming.filter((n) => n.data.nodeType === 'memory');
+  const commands = incoming.filter((n) => n.data.nodeType === 'command');
+  const logs = incoming.filter((n) => n.data.nodeType === 'log');
+
+  // Preserve user-written content (everything before the auto-generated section)
+  const AUTO_MARKER = '\n\n---\n<!-- auto-generated: connections -->';
+  const userContent = agent.persona.split(AUTO_MARKER)[0].trim();
+
+  const sections: string[] = [];
+
+  if (skills.length > 0) {
+    sections.push(`## Skills\n${skills.map((s) => `- **${(s.data.config as SkillData).name}**: ${(s.data.config as SkillData).description}`).join('\n')}`);
+  }
+  if (tools.length > 0) {
+    sections.push(`## Tools\n${tools.map((t) => `- \`${(t.data.config as ToolData).pattern}\` (${(t.data.config as ToolData).scope})`).join('\n')}`);
+  }
+  if (mcps.length > 0) {
+    sections.push(`## MCP Servers\n${mcps.map((m) => `- **${(m.data.config as McpData).serverName}** (\`${(m.data.config as McpData).type}\`)`).join('\n')}`);
+  }
+  if (hooks.length > 0) {
+    sections.push(`## Hooks\n${hooks.map((h) => `- \`${(h.data.config as HookData).event}\`${(h.data.config as HookData).matcher ? ` (matcher: ${(h.data.config as HookData).matcher})` : ''} → ${(h.data.config as HookData).hookType}`).join('\n')}`);
+  }
+  if (commands.length > 0) {
+    sections.push(`## Commands\n${commands.map((c) => `- \`/${(c.data.config as CommandData).name}\`: ${(c.data.config as CommandData).description}`).join('\n')}`);
+  }
+  if (memories.length > 0) {
+    sections.push(`## Memory\n- Scope: \`${(memories[0].data.config as MemoryData).scope}\``);
+  }
+  if (logs.length > 0) {
+    sections.push(`## Logging\n${logs.map((l) => `- Log directory: \`${(l.data.config as LogData).directory}\``).join('\n')}`);
+  }
+
+  if (sections.length === 0) return;
+
+  const autoContent = `${AUTO_MARKER}\n\n${sections.join('\n\n')}`;
+  const newPersona = `${userContent}${autoContent}`;
+
+  if (newPersona !== agent.persona) {
+    get().updateNodeConfig(agentId, { persona: newPersona } as Partial<AgentData>);
   }
 }

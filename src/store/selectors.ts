@@ -438,12 +438,6 @@ export function buildFileTree(nodes: AppNode[], edges: AppEdge[], projectName: s
     claudeDir.children!.push(teamsDir);
   }
 
-  // --- Placeholder directories ---
-  root.children!.push({ name: 'src', type: 'directory', children: [] });
-  root.children!.push({ name: 'tests', type: 'directory', children: [] });
-  root.children!.push({ name: 'docs', type: 'directory', children: [] });
-  root.children!.push({ name: 'scripts', type: 'directory', children: [] });
-
   return root;
 }
 

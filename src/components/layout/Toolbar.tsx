@@ -64,18 +64,32 @@ export function Toolbar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [shareStatus, setShareStatus] = useState<string | null>(null);
 
+  // UTF-8 safe base64 encode/decode helpers
+  const utf8ToBase64 = (str: string): string => {
+    const bytes = new TextEncoder().encode(str);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  };
+
+  const base64ToUtf8 = (b64: string): string => {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  };
+
   // Load project from URL hash on mount
   useEffect(() => {
     const hash = window.location.hash;
     if (!hash || !hash.startsWith('#project=')) return;
     try {
       const encoded = hash.slice('#project='.length);
-      const json = decodeURIComponent(atob(encoded));
+      const json = base64ToUtf8(decodeURIComponent(encoded));
       const data = JSON.parse(json);
       if (data.nodes && data.edges) {
         useProjectStore.setState({ nodes: data.nodes, edges: data.edges });
         useProjectStore.getState().setProjectName(data.projectName || 'my-project');
-        // Clean URL
         window.history.replaceState(null, '', window.location.pathname);
       }
     } catch {
@@ -91,15 +105,17 @@ export function Toolbar() {
       edges: state.edges,
     };
     const json = JSON.stringify(shareData);
-    const encoded = btoa(encodeURIComponent(json));
+    const encoded = utf8ToBase64(json);
     const url = `${window.location.origin}${window.location.pathname}#project=${encoded}`;
 
     navigator.clipboard.writeText(url).then(() => {
       setShareStatus('Link copied!');
       setTimeout(() => setShareStatus(null), 2000);
     }).catch(() => {
-      // Fallback: show URL in prompt
-      window.prompt('Share URL:', url);
+      // Fallback: update URL hash directly
+      window.location.hash = `project=${encoded}`;
+      setShareStatus('URL updated!');
+      setTimeout(() => setShareStatus(null), 2000);
     });
   };
 

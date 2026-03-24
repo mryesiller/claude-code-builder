@@ -34,12 +34,24 @@ export function TemplateGallery() {
       });
     });
 
-    // Create edges
-    const newEdges = template.edges.map((edgeDef) => ({
-      id: `edge_${nodeIds[edgeDef.sourceIdx]}_${nodeIds[edgeDef.targetIdx]}`,
-      source: nodeIds[edgeDef.sourceIdx],
-      target: nodeIds[edgeDef.targetIdx],
-    }));
+    // Create edges with proper handle IDs based on node types
+    const newEdges = template.edges.map((edgeDef) => {
+      const sourceType = template.nodes[edgeDef.sourceIdx].type;
+      const targetType = template.nodes[edgeDef.targetIdx].type;
+
+      // Source handle: leaf nodes use top-source, agent/team use top-source to connect to chef
+      const sourceHandle = 'top-source';
+      // Target handle: chef uses bottom-target, agent/team use bottom-target for children
+      const targetHandle = 'bottom-target';
+
+      return {
+        id: `edge_${nodeIds[edgeDef.sourceIdx]}_${nodeIds[edgeDef.targetIdx]}`,
+        source: nodeIds[edgeDef.sourceIdx],
+        target: nodeIds[edgeDef.targetIdx],
+        sourceHandle,
+        targetHandle,
+      };
+    });
 
     // Set project name from chef
     const chefNode = template.nodes.find((n) => n.type === 'chef');

@@ -91,12 +91,12 @@ export function FileTree({ width = 260 }: { width?: number }) {
       <Dialog open={!!previewFile} onOpenChange={(open) => { if (!open) { setPreviewFile(null); setCopied(false); } }}>
         <DialogContent className="max-w-3xl w-[80vw] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pr-8">
               <DialogTitle className="flex items-center gap-2 font-mono text-sm">
                 <span>{previewFile ? getIcon(previewFile) : ''}</span>
                 {previewFile?.name}
               </DialogTitle>
-              <Button variant="outline" size="sm" className="text-xs" onClick={copyToClipboard}>
+              <Button variant="outline" size="sm" className="text-xs shrink-0" onClick={copyToClipboard}>
                 {copied ? 'Copied!' : 'Copy'}
               </Button>
             </div>

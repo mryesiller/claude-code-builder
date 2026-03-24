@@ -45,6 +45,13 @@ function CanvasFlowInner() {
       const targetNode = nodes.find((n) => n.id === connection.target);
       if (!sourceNode || !targetNode) return false;
       if (connection.source === connection.target) return false;
+
+      // Enforce handle direction: source must use a source handle, target must use a target handle
+      const sourceHandle = (connection as Connection).sourceHandle;
+      const targetHandle = (connection as Connection).targetHandle;
+      if (sourceHandle && !sourceHandle.includes('source')) return false;
+      if (targetHandle && !targetHandle.includes('target')) return false;
+
       return checkValid(
         sourceNode.data.nodeType as ClaudeNodeType,
         targetNode.data.nodeType as ClaudeNodeType
