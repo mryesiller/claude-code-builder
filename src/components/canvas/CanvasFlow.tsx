@@ -149,7 +149,7 @@ function CanvasFlowInner() {
         fitView
         fitViewOptions={{ padding: 0.3 }}
         deleteKeyCode={['Delete', 'Backspace']}
-        className="bg-gray-50"
+        className="bg-gray-50 dark:bg-gray-950"
         defaultEdgeOptions={{
           style: { strokeWidth: 2, stroke: '#94a3b8' },
           type: 'smoothstep',
@@ -172,7 +172,7 @@ function CanvasFlowInner() {
             size="sm"
             onClick={onAutoLayout}
             disabled={nodes.length === 0}
-            className="bg-white shadow-sm"
+            className="bg-white dark:bg-gray-800 shadow-sm"
           >
             Auto Layout
           </Button>
@@ -180,7 +180,7 @@ function CanvasFlowInner() {
             variant="outline"
             size="sm"
             onClick={() => fitView({ padding: 0.2, duration: 300 })}
-            className="bg-white shadow-sm"
+            className="bg-white dark:bg-gray-800 shadow-sm"
           >
             Fit View
           </Button>
@@ -189,10 +189,10 @@ function CanvasFlowInner() {
         {/* Empty state */}
         {nodes.length === 0 && (
           <Panel position="top-center" className="mt-32">
-            <div className="text-center p-8 bg-white/80 rounded-xl border border-dashed border-gray-300 shadow-sm max-w-sm">
+            <div className="text-center p-8 bg-white/80 dark:bg-gray-900/80 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 shadow-sm max-w-sm">
               <p className="text-3xl mb-3">🏗️</p>
-              <h3 className="text-lg font-semibold text-gray-700 mb-1">Canvas Boş</h3>
-              <p className="text-sm text-gray-500">
+              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-1">Canvas Boş</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Sol paneldeki node&apos;ları sürükleyip buraya bırakın.
                 Chef node ile başlayarak Claude Code yapınızı oluşturun.
               </p>

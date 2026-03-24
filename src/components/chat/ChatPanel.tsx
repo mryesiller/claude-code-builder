@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
-export function ChatPanel() {
+export function ChatPanel({ width = 320 }: { width?: number }) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -17,6 +17,8 @@ export function ChatPanel() {
   const addMessage = useProjectStore((s) => s.addChatMessage);
   const apiKey = useProjectStore((s) => s.apiKey);
   const setApiKey = useProjectStore((s) => s.setApiKey);
+  const nodes = useProjectStore((s) => s.nodes);
+  const edges = useProjectStore((s) => s.edges);
   const [keyInput, setKeyInput] = useState('');
 
   useEffect(() => {
@@ -91,9 +93,9 @@ export function ChatPanel() {
   };
 
   return (
-    <div className="w-[320px] border-l border-gray-200 bg-white flex flex-col">
-      <div className="px-3 py-2 border-b border-gray-200 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-700">Agent Chat</h2>
+    <div className="border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col flex-shrink-0" style={{ width }}>
+      <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Agent Chat</h2>
         <Dialog>
           <DialogTrigger
             render={<Button variant="ghost" size="sm" className="text-xs" />}
@@ -124,7 +126,7 @@ export function ChatPanel() {
       <ScrollArea className="flex-1 p-3" ref={scrollRef}>
         <div className="space-y-3">
           {messages.length === 0 && (
-            <p className="text-sm text-gray-400 text-center mt-8">
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center mt-8">
               Claude Code yapınız hakkında sorular sorun.
               Skill, command, agent oluşturmak için yardım alın.
             </p>
@@ -134,15 +136,15 @@ export function ChatPanel() {
               key={msg.id}
               className={`text-sm rounded-lg p-2.5 ${
                 msg.role === 'user'
-                  ? 'bg-blue-50 text-blue-900 ml-4'
-                  : 'bg-gray-50 text-gray-800 mr-4'
+                  ? 'bg-blue-50 dark:bg-blue-950 text-blue-900 dark:text-blue-200 ml-4'
+                  : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 mr-4'
               }`}
             >
               <p className="whitespace-pre-wrap">{msg.content}</p>
             </div>
           ))}
           {isLoading && (
-            <div className="bg-gray-50 text-gray-500 text-sm rounded-lg p-2.5 mr-4 animate-pulse">
+            <div className="bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm rounded-lg p-2.5 mr-4 animate-pulse">
               Thinking...
             </div>
           )}
@@ -150,7 +152,21 @@ export function ChatPanel() {
       </ScrollArea>
 
       {/* Input */}
-      <div className="p-3 border-t border-gray-200">
+      <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
+        {apiKey && nodes.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full text-xs"
+            disabled={isLoading}
+            onClick={() => {
+              const summary = nodes.map((n) => `${n.data.nodeType}: ${n.data.label}`).join(', ');
+              setInput(`Mevcut yapımda ${nodes.length} node var (${summary}). Bu yapıyı geliştirmek için ne önerirsin? Eksik agent, skill, hook veya MCP server var mı?`);
+            }}
+          >
+            💡 Suggest Improvements
+          </Button>
+        )}
         <div className="flex gap-2">
           <Textarea
             placeholder={apiKey ? 'Ask about Claude Code...' : 'Set API key first'}

@@ -221,6 +221,7 @@ export function buildFileTree(nodes: AppNode[], edges: AppEdge[], projectName: s
   if (pluginNodes.length > 0) {
     pluginNodes.forEach((n) => {
       const plugin = n.data.config as PluginData;
+      const connectedToPlugin = getConnectedSources(n.id, edges, nodes);
       const pluginDir: TreeEntry = {
         name: '.claude-plugin',
         type: 'directory',
@@ -236,16 +237,60 @@ export function buildFileTree(nodes: AppNode[], edges: AppEdge[], projectName: s
           },
         ],
       };
-      if (plugin.includeSkills) pluginDir.children!.push({ name: 'skills', type: 'directory', children: [] });
-      if (plugin.includeAgents) pluginDir.children!.push({ name: 'agents', type: 'directory', children: [] });
+      if (plugin.includeSkills) {
+        const pluginSkills = connectedToPlugin.filter((c) => c.data.nodeType === 'skill');
+        pluginDir.children!.push({
+          name: 'skills',
+          type: 'directory',
+          children: pluginSkills.map((s) => {
+            const skill = s.data.config as SkillData;
+            return {
+              name: skill.name,
+              type: 'directory' as const,
+              children: [{ name: 'SKILL.md', type: 'file' as const, content: buildSkillMd(skill) }],
+            };
+          }),
+        });
+      }
+      if (plugin.includeAgents) {
+        const pluginAgents = connectedToPlugin.filter((c) => c.data.nodeType === 'agent');
+        pluginDir.children!.push({
+          name: 'agents',
+          type: 'directory' as const,
+          children: pluginAgents.map((a) => {
+            const agent = a.data.config as AgentData;
+            return { name: `${agent.name}.md`, type: 'file' as const, content: buildAgentMd(agent) };
+          }),
+        });
+      }
       if (plugin.includeHooks) {
+        const pluginHooks = connectedToPlugin.filter((c) => c.data.nodeType === 'hook');
+        const hooksConfig: Record<string, object[]> = {};
+        pluginHooks.forEach((h) => {
+          const hook = h.data.config as HookData;
+          if (!hooksConfig[hook.event]) hooksConfig[hook.event] = [];
+          hooksConfig[hook.event].push({
+            ...(hook.matcher ? { matcher: hook.matcher } : {}),
+            hooks: [{ type: hook.hookType, ...(hook.command ? { command: hook.command } : {}), ...(hook.url ? { url: hook.url } : {}) }],
+          });
+        });
         pluginDir.children!.push({
           name: 'hooks',
           type: 'directory',
-          children: [{ name: 'hooks.json', type: 'file', content: '{}' }],
+          children: [{ name: 'hooks.json', type: 'file', content: JSON.stringify(hooksConfig, null, 2) }],
         });
       }
-      if (plugin.includeMcp) pluginDir.children!.push({ name: '.mcp.json', type: 'file', content: '{"mcpServers":{}}' });
+      if (plugin.includeMcp) {
+        const pluginMcps = connectedToPlugin.filter((c) => c.data.nodeType === 'mcp');
+        const mcpConfig: Record<string, object> = {};
+        pluginMcps.forEach((m) => {
+          const mcp = m.data.config as McpData;
+          mcpConfig[mcp.serverName] = mcp.type === 'stdio'
+            ? { type: 'stdio', command: mcp.command, args: mcp.args }
+            : { type: mcp.type, url: mcp.url };
+        });
+        pluginDir.children!.push({ name: '.mcp.json', type: 'file', content: JSON.stringify({ mcpServers: mcpConfig }, null, 2) });
+      }
       root.children!.push(pluginDir);
     });
   }
@@ -262,6 +307,31 @@ export function buildFileTree(nodes: AppNode[], edges: AppEdge[], projectName: s
       ],
     });
   });
+
+  // --- Teams (experimental — generates CLAUDE.md section) ---
+  const teamNodes = getNodesByType(nodes, 'team');
+  if (teamNodes.length > 0) {
+    const teamsDir: TreeEntry = {
+      name: 'teams',
+      type: 'directory',
+      children: teamNodes.map((n) => {
+        const team = n.data.config as TeamData;
+        const content = [
+          `# Team: ${team.name}`,
+          '',
+          team.description,
+          '',
+          `## Agents`,
+          ...team.agentNames.map((a) => `- ${a}`),
+          '',
+          `## Mode`,
+          `Display: ${team.displayMode}`,
+        ].join('\n');
+        return { name: `${team.name}.md`, type: 'file' as const, content };
+      }),
+    };
+    claudeDir.children!.push(teamsDir);
+  }
 
   // --- Placeholder directories ---
   root.children!.push({ name: 'src', type: 'directory', children: [] });
@@ -312,10 +382,14 @@ function buildSettingsJson(nodes: AppNode[], edges: AppEdge[], chef?: AppNode): 
     });
   }
 
-  // Hooks connected to chef
+  // Hooks connected to chef (or unconnected hooks go to settings.json too)
   const hookNodes = nodes.filter((n) => n.data.nodeType === 'hook');
   const chefHookNodes = chef
-    ? hookNodes.filter((h) => edges.some((e) => e.source === h.id && e.target === chef.id))
+    ? hookNodes.filter((h) => {
+        const isConnectedToAgent = edges.some((e) => e.source === h.id && nodes.find((n) => n.id === e.target)?.data.nodeType === 'agent');
+        const isConnectedToChef = edges.some((e) => e.source === h.id && e.target === chef.id);
+        return isConnectedToChef || !isConnectedToAgent;
+      })
     : hookNodes;
   if (chefHookNodes.length > 0) {
     const hooks: Record<string, object[]> = {};

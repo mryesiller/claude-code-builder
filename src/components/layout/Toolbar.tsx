@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { TemplateGallery } from './TemplateGallery';
 import { ValidationPanel } from './ValidationPanel';
+import { useThemeStore } from '@/hooks/useTheme';
 
 export function Toolbar() {
   const projectName = useProjectStore((s) => s.projectName);
@@ -58,6 +59,8 @@ export function Toolbar() {
     useProjectStore.getState().setProjectName('my-project');
   };
 
+  const theme = useThemeStore((s) => s.theme);
+  const toggleTheme = useThemeStore((s) => s.toggleTheme);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,18 +78,18 @@ export function Toolbar() {
   };
 
   return (
-    <div className="h-12 border-b border-gray-200 bg-white px-4 flex items-center gap-2">
+    <div className="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 flex items-center gap-2">
       {/* Logo */}
       <div className="flex items-center gap-2 mr-2">
         <span className="text-lg">🏗️</span>
-        <span className="font-bold text-gray-800 hidden sm:inline">Claude Code Builder</span>
+        <span className="font-bold text-gray-800 dark:text-gray-100 hidden sm:inline">Claude Code Builder</span>
       </div>
 
       <Separator orientation="vertical" className="h-6" />
 
       {/* Project name */}
       <div className="flex items-center gap-1.5">
-        <span className="text-xs text-gray-500 hidden md:inline">Project:</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400 hidden md:inline">Project:</span>
         <Input
           value={projectName}
           onChange={(e) => setProjectName(e.target.value)}
@@ -112,11 +115,32 @@ export function Toolbar() {
         Clear
       </Button>
 
+      <Separator orientation="vertical" className="h-6" />
+
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-xs px-2"
+        onClick={() => useProjectStore.temporal.getState().undo()}
+        title="Undo (Ctrl+Z)"
+      >
+        ↩ Undo
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-xs px-2"
+        onClick={() => useProjectStore.temporal.getState().redo()}
+        title="Redo (Ctrl+Shift+Z)"
+      >
+        ↪ Redo
+      </Button>
+
       <div className="flex-1" />
 
       {/* Right side */}
       <div className="flex items-center gap-1.5">
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-gray-400 dark:text-gray-500">
           {nodes.length} nodes &middot; {edges.length} edges
         </span>
 
@@ -131,6 +155,9 @@ export function Toolbar() {
         </Button>
         <Button variant="ghost" size="sm" className="text-xs" onClick={handleLoad}>
           Load
+        </Button>
+        <Button variant="ghost" size="sm" className="text-xs" onClick={toggleTheme}>
+          {theme === 'light' ? '🌙' : '☀️'}
         </Button>
         <Button onClick={handleExport} disabled={isExporting || nodes.length === 0} size="sm">
           {isExporting ? 'Exporting...' : 'Export ZIP'}

@@ -60,9 +60,9 @@ function BaseNodeComponent({ id, data, selected, children }: BaseNodeProps) {
 
       {/* Body */}
       <div className="px-3 py-2.5" style={{ backgroundColor: config.bgColor, borderBottomLeftRadius: '10px', borderBottomRightRadius: '10px' }}>
-        <p className="text-sm font-semibold text-gray-800 truncate">{data.label}</p>
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{data.label}</p>
         {children && <div className="mt-1.5">{children}</div>}
-        <p className="text-[10px] text-gray-400 mt-1.5 select-none">
+        <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 select-none">
           Double-click to edit
         </p>
       </div>
