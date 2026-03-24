@@ -25,6 +25,109 @@ function getNodesByType(nodes: AppNode[], type: ClaudeNodeType): AppNode[] {
   return nodes.filter((n) => n.data.nodeType === type);
 }
 
+// --- Build CLAUDE.md with agent orchestration relationships ---
+function buildClaudeMd(chefData: ChefData, chefNode: AppNode, nodes: AppNode[], edges: AppEdge[]): string {
+  const sections: string[] = [];
+
+  // User-written persona (the core CLAUDE.md content)
+  if (chefData.persona.trim()) {
+    sections.push(chefData.persona.trim());
+  }
+
+  // Find all agents connected to chef
+  const connectedAgents = getConnectedSources(chefNode.id, edges, nodes)
+    .filter((n) => n.data.nodeType === 'agent');
+
+  if (connectedAgents.length === 0) return sections.join('\n\n');
+
+  // --- Agent Orchestration Section ---
+  const orchestrationLines: string[] = [
+    '## Agent Orchestration',
+    '',
+    `This project uses ${connectedAgents.length} specialized agent${connectedAgents.length > 1 ? 's' : ''} that work together under the main orchestrator.`,
+    '',
+    '### Available Agents',
+    '',
+  ];
+
+  connectedAgents.forEach((agentNode) => {
+    const agent = agentNode.data.config as AgentData;
+    orchestrationLines.push(`#### \`${agent.name}\``);
+    if (agent.description) orchestrationLines.push(`- **Purpose**: ${agent.description}`);
+    if (agent.model && agent.model !== 'inherit') orchestrationLines.push(`- **Model**: ${agent.model}`);
+    if (agent.tools.length > 0) orchestrationLines.push(`- **Tools**: ${agent.tools.join(', ')}`);
+
+    // Find skills connected to this agent
+    const agentSkills = getConnectedSources(agentNode.id, edges, nodes)
+      .filter((n) => n.data.nodeType === 'skill');
+    if (agentSkills.length > 0) {
+      orchestrationLines.push(`- **Skills**: ${agentSkills.map((s) => (s.data.config as SkillData).name).join(', ')}`);
+    }
+
+    // Find MCP servers connected to this agent
+    const agentMcps = getConnectedSources(agentNode.id, edges, nodes)
+      .filter((n) => n.data.nodeType === 'mcp');
+    if (agentMcps.length > 0) {
+      orchestrationLines.push(`- **MCP Servers**: ${agentMcps.map((m) => (m.data.config as McpData).serverName).join(', ')}`);
+    }
+
+    // Find hooks connected to this agent
+    const agentHooks = getConnectedSources(agentNode.id, edges, nodes)
+      .filter((n) => n.data.nodeType === 'hook');
+    if (agentHooks.length > 0) {
+      orchestrationLines.push(`- **Hooks**: ${agentHooks.map((h) => `${(h.data.config as HookData).event}`).join(', ')}`);
+    }
+
+    // Find memory connected to this agent
+    const agentMemory = getConnectedSources(agentNode.id, edges, nodes)
+      .filter((n) => n.data.nodeType === 'memory');
+    if (agentMemory.length > 0) {
+      orchestrationLines.push(`- **Memory**: ${agentMemory.map((m) => (m.data.config as MemoryData).scope).join(', ')}`);
+    }
+
+    orchestrationLines.push('');
+  });
+
+  // --- Agent Delegation Guide ---
+  orchestrationLines.push('### Delegation Guide', '');
+  orchestrationLines.push('Use the following agents for these tasks:', '');
+
+  connectedAgents.forEach((agentNode) => {
+    const agent = agentNode.data.config as AgentData;
+    orchestrationLines.push(`- **${agent.name}**: ${agent.description || agent.persona.split('\n')[0] || 'Specialized agent'}`);
+  });
+
+  orchestrationLines.push('');
+
+  // --- MCP Servers connected directly to chef ---
+  const chefMcps = getConnectedSources(chefNode.id, edges, nodes)
+    .filter((n) => n.data.nodeType === 'mcp');
+  if (chefMcps.length > 0) {
+    orchestrationLines.push('### Project-Level MCP Servers', '');
+    chefMcps.forEach((m) => {
+      const mcp = m.data.config as McpData;
+      orchestrationLines.push(`- **${mcp.serverName}** (\`${mcp.type}\`): ${mcp.type === 'stdio' ? mcp.command : mcp.url}`);
+    });
+    orchestrationLines.push('');
+  }
+
+  // --- Rules ---
+  const ruleNodes = getNodesByType(nodes, 'rule');
+  if (ruleNodes.length > 0) {
+    orchestrationLines.push('### Project Rules', '');
+    ruleNodes.forEach((r) => {
+      const rule = r.data.config as RuleData;
+      const pathInfo = rule.paths && rule.paths.length > 0 ? ` (applies to: \`${rule.paths.join('`, `')}\`)` : ' (global)';
+      orchestrationLines.push(`- **${rule.name}**${pathInfo}`);
+    });
+    orchestrationLines.push('');
+  }
+
+  sections.push(orchestrationLines.join('\n'));
+
+  return sections.join('\n\n');
+}
+
 export function buildFileTree(nodes: AppNode[], edges: AppEdge[], projectName: string): TreeEntry {
   const chefNodes = getNodesByType(nodes, 'chef');
   const chef = chefNodes[0];
@@ -38,10 +141,12 @@ export function buildFileTree(nodes: AppNode[], edges: AppEdge[], projectName: s
 
   // --- CLAUDE.md ---
   if (chef) {
+    const chefData = chef.data.config as ChefData;
+    const claudeMdContent = buildClaudeMd(chefData, chef, nodes, edges);
     root.children!.push({
       name: 'CLAUDE.md',
       type: 'file',
-      content: (chef.data.config as ChefData).persona,
+      content: claudeMdContent,
     });
   }
 

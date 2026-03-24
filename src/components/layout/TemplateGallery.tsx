@@ -47,10 +47,10 @@ export function TemplateGallery() {
       store.setProjectName(chefNode.config.projectName as string);
     }
 
-    // Apply
+    // Clear existing and apply new template
     useProjectStore.setState({
-      nodes: [...store.nodes, ...newNodes],
-      edges: [...store.edges, ...newEdges],
+      nodes: newNodes,
+      edges: newEdges,
     });
 
     setOpen(false);

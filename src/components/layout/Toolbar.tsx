@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useProjectStore } from '@/store/useProjectStore';
 import { useFileTree } from '@/store/selectors';
 import { exportAsZip } from '@/lib/export/zipExporter';
@@ -62,6 +62,46 @@ export function Toolbar() {
   const theme = useThemeStore((s) => s.theme);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
+
+  // Load project from URL hash on mount
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash || !hash.startsWith('#project=')) return;
+    try {
+      const encoded = hash.slice('#project='.length);
+      const json = decodeURIComponent(atob(encoded));
+      const data = JSON.parse(json);
+      if (data.nodes && data.edges) {
+        useProjectStore.setState({ nodes: data.nodes, edges: data.edges });
+        useProjectStore.getState().setProjectName(data.projectName || 'my-project');
+        // Clean URL
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    } catch {
+      console.error('Failed to load project from URL');
+    }
+  }, []);
+
+  const handleShare = () => {
+    const state = useProjectStore.getState();
+    const shareData = {
+      projectName: state.projectName,
+      nodes: state.nodes,
+      edges: state.edges,
+    };
+    const json = JSON.stringify(shareData);
+    const encoded = btoa(encodeURIComponent(json));
+    const url = `${window.location.origin}${window.location.pathname}#project=${encoded}`;
+
+    navigator.clipboard.writeText(url).then(() => {
+      setShareStatus('Link copied!');
+      setTimeout(() => setShareStatus(null), 2000);
+    }).catch(() => {
+      // Fallback: show URL in prompt
+      window.prompt('Share URL:', url);
+    });
+  };
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -155,6 +195,15 @@ export function Toolbar() {
         </Button>
         <Button variant="ghost" size="sm" className="text-xs" onClick={handleLoad}>
           Load
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs"
+          onClick={handleShare}
+          disabled={nodes.length === 0}
+        >
+          {shareStatus || 'Share'}
         </Button>
         <Button variant="ghost" size="sm" className="text-xs" onClick={toggleTheme}>
           {theme === 'light' ? '🌙' : '☀️'}

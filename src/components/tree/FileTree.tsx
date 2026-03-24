@@ -5,6 +5,7 @@ import { type TreeEntry } from '@/lib/types';
 import { useFileTree } from '@/store/selectors';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 function getIcon(entry: TreeEntry): string {
   if (entry.type === 'directory') return '📁';
@@ -62,10 +63,19 @@ function TreeNode({ entry, depth = 0, onFileClick }: { entry: TreeEntry; depth?:
 export function FileTree({ width = 260 }: { width?: number }) {
   const tree = useFileTree();
   const [previewFile, setPreviewFile] = useState<TreeEntry | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const onFileClick = useCallback((entry: TreeEntry) => {
     setPreviewFile(entry);
   }, []);
+
+  const copyToClipboard = useCallback(() => {
+    if (!previewFile?.content) return;
+    navigator.clipboard.writeText(previewFile.content).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [previewFile]);
 
   return (
     <div className="border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col flex-shrink-0" style={{ width }}>
@@ -78,13 +88,18 @@ export function FileTree({ width = 260 }: { width?: number }) {
         </div>
       </ScrollArea>
 
-      <Dialog open={!!previewFile} onOpenChange={(open) => !open && setPreviewFile(null)}>
+      <Dialog open={!!previewFile} onOpenChange={(open) => { if (!open) { setPreviewFile(null); setCopied(false); } }}>
         <DialogContent className="max-w-3xl w-[80vw] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 font-mono text-sm">
-              <span>{previewFile ? getIcon(previewFile) : ''}</span>
-              {previewFile?.name}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2 font-mono text-sm">
+                <span>{previewFile ? getIcon(previewFile) : ''}</span>
+                {previewFile?.name}
+              </DialogTitle>
+              <Button variant="outline" size="sm" className="text-xs" onClick={copyToClipboard}>
+                {copied ? 'Copied!' : 'Copy'}
+              </Button>
+            </div>
           </DialogHeader>
           <pre className="text-xs font-mono bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 overflow-auto max-h-[60vh] whitespace-pre-wrap">
             {previewFile?.content || '(empty)'}
