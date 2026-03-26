@@ -1,8 +1,10 @@
 # Claude Code Visual Builder
 
+**[ccbuilder.dev](https://ccbuilder.dev)**
+
 A visual drag-and-drop tool for designing [Claude Code](https://docs.anthropic.com/en/docs/claude-code) project structures. Build your agents, skills, hooks, and MCP servers on a canvas — then export as a ready-to-use ZIP.
 
-> **No account needed. Runs locally in your browser.**
+> **No account needed. Runs entirely in your browser.**
 
 <!-- TODO: Add screenshot here -->
 <!-- ![Screenshot](public/screenshot.png) -->
