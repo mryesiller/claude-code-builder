@@ -34,12 +34,12 @@ function PaletteItem({ type }: { type: ClaudeNodeType }) {
 
 export function NodePalette({ width = 200 }: { width?: number }) {
   return (
-    <div className="border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col flex-shrink-0" style={{ width }}>
-      <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+    <div className="border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col flex-shrink-0 min-h-0" style={{ width }}>
+      <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Node Palette</h2>
       </div>
-      <ScrollArea className="flex-1">
-        <div className="p-2 space-y-3">
+      <ScrollArea className="flex-1 min-h-0 overflow-hidden">
+        <div className="p-2 space-y-3 pb-4">
           {NODE_CATEGORIES.map((category) => (
             <div key={category.key}>
               <p className="px-1 mb-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
