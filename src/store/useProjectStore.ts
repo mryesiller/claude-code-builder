@@ -70,7 +70,20 @@ interface ProjectStore {
 export const useProjectStore = create<ProjectStore>()(temporal((set, get) => ({
   // --- Project ---
   projectName: 'my-project',
-  setProjectName: (name) => set({ projectName: name }),
+  setProjectName: (name) => {
+    set({ projectName: name });
+    // Sync with Chef node's projectName so file tree root updates
+    const { nodes } = get();
+    const chefNode = nodes.find((n) => n.data.nodeType === 'chef');
+    if (chefNode) {
+      const updated = nodes.map((n) =>
+        n.id === chefNode.id
+          ? { ...n, data: { ...n.data, config: { ...n.data.config, projectName: name } } }
+          : n
+      );
+      set({ nodes: updated });
+    }
+  },
 
   // --- Nodes ---
   nodes: [],

@@ -13,8 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Claude Code Builder",
-  description: "Visual drag & drop builder for Claude Code project structures",
+  title: "Claude Code Builder — Visual Project Designer",
+  description: "Visual drag & drop builder for designing Claude Code project structures. Build agents, skills, hooks, and MCP servers on a canvas.",
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
