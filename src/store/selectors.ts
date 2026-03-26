@@ -503,6 +503,8 @@ function buildSettingsJson(nodes: AppNode[], edges: AppEdge[], chef?: AppNode): 
           ...(hook.url ? { url: hook.url } : {}),
           ...(hook.prompt ? { prompt: hook.prompt } : {}),
           ...(hook.timeout ? { timeout: hook.timeout } : {}),
+          ...(hook.headers && Object.keys(hook.headers).length > 0 ? { headers: hook.headers } : {}),
+          ...(hook.model ? { model: hook.model } : {}),
         }],
       });
     });
@@ -585,6 +587,117 @@ function buildSkillMd(skill: SkillData): string {
     .join('\n');
 
   return `---\n${yaml}\n---\n\n${skill.content}`;
+}
+
+// --- Serialize project context for Agent Chat ---
+function renderTreePaths(entry: TreeEntry, prefix = ''): string[] {
+  const lines: string[] = [];
+  const path = prefix ? `${prefix}/${entry.name}` : entry.name;
+  if (entry.type === 'directory') {
+    lines.push(`${path}/`);
+    entry.children?.forEach((child) => lines.push(...renderTreePaths(child, path)));
+  } else {
+    lines.push(path);
+  }
+  return lines;
+}
+
+export function serializeProjectContext(nodes: AppNode[], edges: AppEdge[], projectName: string): string {
+  if (nodes.length === 0) return '';
+
+  const sections: string[] = [];
+  const nodesByType: Record<string, AppNode[]> = {};
+  nodes.forEach((n) => {
+    const t = n.data.nodeType;
+    if (!nodesByType[t]) nodesByType[t] = [];
+    nodesByType[t].push(n);
+  });
+
+  // Overview
+  const typeCounts = Object.entries(nodesByType).map(([t, ns]) => `${ns.length} ${t}`).join(', ');
+  sections.push(`Project: ${projectName} (${nodes.length} nodes, ${edges.length} edges — ${typeCounts})`);
+
+  // Node details
+  const nodeLines: string[] = ['', 'Nodes:'];
+  nodes.forEach((n) => {
+    const cfg = n.data.config;
+    const type = n.data.nodeType;
+    let detail = '';
+
+    // Find what this node connects to
+    const targets = edges.filter((e) => e.source === n.id).map((e) => {
+      const t = nodes.find((nd) => nd.id === e.target);
+      return t ? `${t.data.nodeType}:${t.data.label}` : null;
+    }).filter(Boolean);
+    const connStr = targets.length > 0 ? ` → connected to: ${targets.join(', ')}` : '';
+
+    switch (type) {
+      case 'chef': {
+        const c = cfg as ChefData;
+        detail = `(model: ${c.model || 'default'}, memory: ${c.autoMemoryEnabled ? 'enabled' : 'disabled'})`;
+        break;
+      }
+      case 'agent': {
+        const a = cfg as AgentData;
+        const parts: string[] = [];
+        if (a.model && a.model !== 'inherit') parts.push(`model: ${a.model}`);
+        if (a.tools.length > 0) parts.push(`tools: ${a.tools.join(', ')}`);
+        if (a.background) parts.push('background');
+        if (a.description) parts.push(a.description.slice(0, 60));
+        detail = parts.length > 0 ? `(${parts.join(', ')})` : '';
+        break;
+      }
+      case 'skill': {
+        const s = cfg as SkillData;
+        detail = s.description ? `(${s.description.slice(0, 60)})` : '';
+        break;
+      }
+      case 'mcp': {
+        const m = cfg as McpData;
+        detail = m.type === 'stdio' ? `(${m.type}, ${m.command} ${(m.args || []).join(' ')})` : `(${m.type}, ${m.url})`;
+        break;
+      }
+      case 'hook': {
+        const h = cfg as HookData;
+        const parts: string[] = [h.hookType];
+        if (h.matcher) parts.push(`matcher: ${h.matcher}`);
+        detail = `(${parts.join(', ')})`;
+        break;
+      }
+      case 'rule': {
+        const r = cfg as RuleData;
+        detail = r.isPathSpecific && r.paths?.length ? `(paths: ${r.paths.join(', ')})` : '(global)';
+        break;
+      }
+      default:
+        detail = '';
+    }
+
+    nodeLines.push(`- ${type}: ${n.data.label} ${detail}${connStr}`);
+  });
+  sections.push(nodeLines.join('\n'));
+
+  // Connection graph
+  const connLines: string[] = ['', 'Connections:'];
+  edges.forEach((e) => {
+    const src = nodes.find((n) => n.id === e.source);
+    const tgt = nodes.find((n) => n.id === e.target);
+    if (src && tgt) {
+      connLines.push(`- ${src.data.label} (${src.data.nodeType}) → ${tgt.data.label} (${tgt.data.nodeType})`);
+    }
+  });
+  if (connLines.length > 2) sections.push(connLines.join('\n'));
+
+  // File tree
+  const tree = buildFileTree(nodes, edges, projectName);
+  const treePaths = renderTreePaths(tree);
+  if (treePaths.length > 0) {
+    sections.push('\nFile Tree:\n' + treePaths.join('\n'));
+  }
+
+  const result = sections.join('\n');
+  // Cap at ~4000 chars
+  return result.length > 4000 ? result.slice(0, 3950) + '\n...(truncated)' : result;
 }
 
 // --- Custom hook to get file tree ---

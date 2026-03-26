@@ -16,7 +16,10 @@ import {
 import '@xyflow/react/dist/style.css';
 
 import { nodeTypes } from './nodes';
+import { DeletableEdge } from './DeletableEdge';
 import { NodeContextMenu, useContextMenu } from './NodeContextMenu';
+
+const edgeTypes = { deletable: DeletableEdge };
 import { useProjectStore, type AppNode, type AppEdge } from '@/store/useProjectStore';
 import { isValidConnection as checkValid } from '@/lib/connectionRules';
 import { getConnectionEffect } from '@/lib/connectionRules';
@@ -149,6 +152,7 @@ function CanvasFlowInner() {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         isValidConnection={isValidConnectionFn}
         onDragOver={onDragOver}
         onDrop={onDrop}
@@ -159,16 +163,16 @@ function CanvasFlowInner() {
         className="bg-gray-50 dark:bg-gray-950"
         defaultEdgeOptions={{
           style: { strokeWidth: 2, stroke: '#94a3b8' },
-          type: 'smoothstep',
+          type: 'deletable',
           animated: true,
         }}
         proOptions={{ hideAttribution: true }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#d1d5db" />
-        <Controls className="!bg-white !border !border-gray-200 !rounded-lg !shadow-sm" />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1} className="!text-gray-300 dark:!text-gray-700" />
+        <Controls className="!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-600 !rounded-lg !shadow-sm [&>button]:!bg-white dark:[&>button]:!bg-gray-800 [&>button]:!border-gray-200 dark:[&>button]:!border-gray-600 [&>button]:!text-gray-700 dark:[&>button]:!text-gray-200 [&>button]:hover:!bg-gray-100 dark:[&>button]:hover:!bg-gray-700 [&_svg]:!fill-gray-700 dark:[&_svg]:!fill-gray-200" />
         <MiniMap
           nodeStrokeWidth={3}
-          className="!bg-white !border !border-gray-200 !rounded-lg !shadow-sm"
+          className="!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-600 !rounded-lg !shadow-sm"
           maskColor="rgba(0,0,0,0.08)"
         />
 
@@ -198,10 +202,10 @@ function CanvasFlowInner() {
           <Panel position="top-center" className="mt-32">
             <div className="text-center p-8 bg-white/80 dark:bg-gray-900/80 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 shadow-sm max-w-sm">
               <p className="text-3xl mb-3">🏗️</p>
-              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-1">Canvas Boş</h3>
+              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-1">Canvas Empty</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Sol paneldeki node&apos;ları sürükleyip buraya bırakın.
-                Chef node ile başlayarak Claude Code yapınızı oluşturun.
+                Drag nodes from the left panel and drop them here.
+                Start with a Chef node to build your Claude Code structure.
               </p>
             </div>
           </Panel>

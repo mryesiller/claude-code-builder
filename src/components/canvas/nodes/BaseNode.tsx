@@ -58,15 +58,12 @@ function BaseNodeComponent({ id, data, selected, children }: BaseNodeProps) {
 
   return (
     <div
+      style={{ borderColor: config.color }}
       className={`
         group/node relative min-w-[200px] max-w-[280px] rounded-xl border-2 shadow-md
-        transition-all duration-200 cursor-pointer
-        ${selected ? 'ring-2 ring-blue-400 ring-offset-2 shadow-xl scale-[1.03]' : 'hover:shadow-lg hover:scale-[1.01]'}
+        transition-all duration-200 cursor-pointer bg-white dark:bg-gray-800
+        ${selected ? 'ring-2 ring-blue-400 ring-offset-2 dark:ring-offset-gray-900 shadow-xl scale-[1.03]' : 'hover:shadow-lg hover:scale-[1.01]'}
       `}
-      style={{
-        borderColor: config.color,
-        backgroundColor: '#ffffff',
-      }}
       onDoubleClick={() => setSelectedNodeId(id)}
     >
       {/* Delete button */}
@@ -88,33 +85,36 @@ function BaseNodeComponent({ id, data, selected, children }: BaseNodeProps) {
       </div>
 
       {/* Body */}
-      <div className="px-3 py-2.5" style={{ backgroundColor: config.bgColor, borderBottomLeftRadius: '10px', borderBottomRightRadius: '10px' }}>
-        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{data.label}</p>
-        {children && <div className="mt-1.5">{children}</div>}
+      <div className="relative px-3 py-2.5" style={{ backgroundColor: config.bgColor, borderBottomLeftRadius: '10px', borderBottomRightRadius: '10px' }}>
+        <div className="hidden dark:block absolute inset-0 bg-gray-800/90 rounded-b-[10px] pointer-events-none" />
+        <div className="relative">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{data.label}</p>
+          {children && <div className="mt-1.5">{children}</div>}
 
-        {/* Connection badges */}
-        {incomingLabels.length > 0 && (
-          <div className="mt-1.5 flex flex-wrap gap-1">
-            {incomingLabels.map((item, i) => (
-              <span key={i} className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200">
-                {NODE_TYPES[item.type]?.icon} {item.label}
-              </span>
-            ))}
-          </div>
-        )}
-        {outgoingLabels.length > 0 && (
-          <div className="mt-1 flex flex-wrap gap-1">
-            {outgoingLabels.map((item, i) => (
-              <span key={i} className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">
-                {NODE_TYPES[item.type]?.icon} {item.label}
-              </span>
-            ))}
-          </div>
-        )}
+          {/* Connection badges */}
+          {incomingLabels.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {incomingLabels.map((item, i) => (
+                <span key={i} className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700">
+                  {NODE_TYPES[item.type]?.icon} {item.label}
+                </span>
+              ))}
+            </div>
+          )}
+          {outgoingLabels.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {outgoingLabels.map((item, i) => (
+                <span key={i} className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700">
+                  {NODE_TYPES[item.type]?.icon} {item.label}
+                </span>
+              ))}
+            </div>
+          )}
 
-        <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 select-none">
-          Double-click to edit
-        </p>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 select-none">
+            Double-click to edit
+          </p>
+        </div>
       </div>
 
       {/* Handles — direction-aware per node type */}

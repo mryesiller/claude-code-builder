@@ -20,6 +20,33 @@ export function Toolbar() {
   const nodes = useProjectStore((s) => s.nodes);
   const edges = useProjectStore((s) => s.edges);
   const tree = useFileTree();
+  const [autoSaved, setAutoSaved] = useState(false);
+
+  // Auto-load on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('claude-builder-project');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data.nodes?.length > 0) {
+          useProjectStore.getState().setProjectName(data.projectName || 'my-project');
+          useProjectStore.setState({ nodes: data.nodes || [], edges: data.edges || [] });
+        }
+      } catch { /* ignore corrupt data */ }
+    }
+  }, []);
+
+  // Auto-save with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (nodes.length > 0) {
+        localStorage.setItem('claude-builder-project', JSON.stringify({ projectName, nodes, edges }));
+        setAutoSaved(true);
+        setTimeout(() => setAutoSaved(false), 2000);
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [nodes, edges, projectName]);
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -134,98 +161,105 @@ export function Toolbar() {
   };
 
   return (
-    <div className="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 flex items-center gap-2">
+    <div className="h-12 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 sm:px-4 flex items-center gap-1 sm:gap-2 overflow-x-auto overflow-y-hidden min-w-0">
       {/* Logo */}
-      <div className="flex items-center gap-2 mr-2">
+      <div className="flex items-center gap-1.5 shrink-0">
         <span className="text-lg">🏗️</span>
-        <span className="font-bold text-gray-800 dark:text-gray-100 hidden sm:inline">Claude Code Builder</span>
+        <span className="font-bold text-gray-800 dark:text-gray-100 hidden lg:inline text-sm whitespace-nowrap">Claude Code Builder</span>
       </div>
 
-      <Separator orientation="vertical" className="h-6" />
+      <Separator orientation="vertical" className="h-6 shrink-0 hidden sm:block" />
 
       {/* Project name */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-xs text-gray-500 dark:text-gray-400 hidden md:inline">Project:</span>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <span className="text-xs text-gray-500 dark:text-gray-400 hidden xl:inline">Project:</span>
         <Input
           value={projectName}
           onChange={(e) => setProjectName(e.target.value)}
-          className="w-36 h-7 text-sm"
+          className="w-28 sm:w-36 h-7 text-sm"
         />
       </div>
 
-      <Separator orientation="vertical" className="h-6" />
+      <Separator orientation="vertical" className="h-6 shrink-0" />
 
       {/* Templates & Actions */}
-      <TemplateGallery />
-      <Button variant="ghost" size="sm" className="text-xs" onClick={() => fileInputRef.current?.click()}>
-        Import ZIP
-      </Button>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".zip"
-        onChange={handleImport}
-        className="hidden"
-      />
-      <Button variant="ghost" size="sm" className="text-xs" onClick={handleClear}>
-        Clear
-      </Button>
+      <div className="flex items-center gap-1 shrink-0">
+        <TemplateGallery />
+        <Button variant="ghost" size="sm" className="text-xs hidden md:inline-flex" onClick={() => fileInputRef.current?.click()}>
+          Import ZIP
+        </Button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".zip"
+          onChange={handleImport}
+          className="hidden"
+        />
+        <Button variant="ghost" size="sm" className="text-xs hidden md:inline-flex" onClick={handleClear}>
+          Clear
+        </Button>
+      </div>
 
-      <Separator orientation="vertical" className="h-6" />
+      <Separator orientation="vertical" className="h-6 shrink-0 hidden sm:block" />
 
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-xs px-2"
-        onClick={() => useProjectStore.temporal.getState().undo()}
-        title="Undo (Ctrl+Z)"
-      >
-        ↩ Undo
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-xs px-2"
-        onClick={() => useProjectStore.temporal.getState().redo()}
-        title="Redo (Ctrl+Shift+Z)"
-      >
-        ↪ Redo
-      </Button>
+      <div className="flex items-center gap-0.5 shrink-0">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs px-1.5"
+          onClick={() => useProjectStore.temporal.getState().undo()}
+          title="Undo (Ctrl+Z)"
+        >
+          ↩ <span className="hidden sm:inline">Undo</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs px-1.5"
+          onClick={() => useProjectStore.temporal.getState().redo()}
+          title="Redo (Ctrl+Shift+Z)"
+        >
+          ↪ <span className="hidden sm:inline">Redo</span>
+        </Button>
+      </div>
 
-      <div className="flex-1" />
+      <div className="flex-1 min-w-0" />
 
       {/* Right side */}
-      <div className="flex items-center gap-1.5">
-        <span className="text-xs text-gray-400 dark:text-gray-500">
+      <div className="flex items-center gap-1 shrink-0">
+        <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap hidden lg:inline">
           {nodes.length} nodes &middot; {edges.length} edges
         </span>
 
-        <Separator orientation="vertical" className="h-6" />
+        <Separator orientation="vertical" className="h-6 hidden lg:block" />
 
         <ValidationPanel />
 
         <Separator orientation="vertical" className="h-6" />
 
-        <Button variant="ghost" size="sm" className="text-xs" onClick={handleSave}>
+        <Button variant="ghost" size="sm" className="text-xs px-1.5" onClick={handleSave}>
           Save
         </Button>
-        <Button variant="ghost" size="sm" className="text-xs" onClick={handleLoad}>
+        {autoSaved && (
+          <span className="text-[10px] text-green-600 dark:text-green-400 animate-pulse whitespace-nowrap">auto-saved</span>
+        )}
+        <Button variant="ghost" size="sm" className="text-xs px-1.5 hidden sm:inline-flex" onClick={handleLoad}>
           Load
         </Button>
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs"
+          className="text-xs px-1.5 hidden sm:inline-flex"
           onClick={handleShare}
           disabled={nodes.length === 0}
         >
           {shareStatus || 'Share'}
         </Button>
-        <Button variant="ghost" size="sm" className="text-xs" onClick={toggleTheme}>
+        <Button variant="ghost" size="sm" className="text-xs px-1.5" onClick={toggleTheme}>
           {theme === 'light' ? '🌙' : '☀️'}
         </Button>
-        <Button onClick={handleExport} disabled={isExporting || nodes.length === 0} size="sm">
-          {isExporting ? 'Exporting...' : 'Export ZIP'}
+        <Button onClick={handleExport} disabled={isExporting || nodes.length === 0} size="sm" className="whitespace-nowrap">
+          {isExporting ? '...' : 'Export ZIP'}
         </Button>
       </div>
     </div>

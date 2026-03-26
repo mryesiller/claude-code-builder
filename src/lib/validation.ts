@@ -150,5 +150,19 @@ export function validateProject(nodes: AppNode[], edges: Edge[]): ValidationWarn
     });
   });
 
+  // Check for duplicate MCP server names
+  const mcpNames = nodes
+    .filter((n) => n.data.nodeType === 'mcp')
+    .map((n) => (n.data.config as McpData).serverName);
+  const duplicateMcps = mcpNames.filter((name, idx) => mcpNames.indexOf(name) !== idx);
+  duplicateMcps.forEach((name) => {
+    warnings.push({
+      nodeId: '',
+      nodeLabel: name,
+      severity: 'error',
+      message: `Duplicate MCP server name: "${name}". Server names must be unique.`,
+    });
+  });
+
   return warnings;
 }

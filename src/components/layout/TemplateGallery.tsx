@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PROJECT_TEMPLATES, type ProjectTemplate } from '@/lib/projectTemplates';
-import { useProjectStore, type AppNode } from '@/store/useProjectStore';
+import { useProjectStore, type AppNode, rebuildAllPersonas } from '@/store/useProjectStore';
 import { getDefaultLabel, getNextId } from '@/lib/templates';
 import { type ClaudeNodeType, type NodeDataMap } from '@/lib/types';
 
@@ -65,6 +65,9 @@ export function TemplateGallery() {
       edges: newEdges,
     });
 
+    // Rebuild all personas based on connections (chef + agents)
+    setTimeout(() => rebuildAllPersonas(), 0);
+
     setOpen(false);
   };
 
@@ -101,21 +104,21 @@ function TemplateCard({
   onApply: () => void;
 }) {
   return (
-    <div className="border border-gray-200 rounded-lg p-4 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer group"
+    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all cursor-pointer group bg-white dark:bg-gray-800"
       onClick={onApply}
     >
       <div className="flex items-center gap-3 mb-2">
         <span className="text-2xl">{template.icon}</span>
         <div>
-          <h3 className="font-semibold text-gray-800 group-hover:text-blue-600">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400">
             {template.name}
           </h3>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             {template.nodes.length} nodes
           </p>
         </div>
       </div>
-      <p className="text-sm text-gray-600">{template.description}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-300">{template.description}</p>
     </div>
   );
 }

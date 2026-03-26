@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useProjectStore } from '@/store/useProjectStore';
+import { serializeProjectContext } from '@/store/selectors';
 import { type ChatMessage } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ export function ChatPanel({ width = 320 }: { width?: number }) {
   const setApiKey = useProjectStore((s) => s.setApiKey);
   const nodes = useProjectStore((s) => s.nodes);
   const edges = useProjectStore((s) => s.edges);
+  const projectName = useProjectStore((s) => s.projectName);
   const [keyInput, setKeyInput] = useState('');
 
   useEffect(() => {
@@ -64,6 +66,7 @@ export function ChatPanel({ width = 320 }: { width?: number }) {
             role: m.role,
             content: m.content,
           })),
+          projectContext: serializeProjectContext(nodes, edges, projectName),
         }),
       });
 
@@ -127,8 +130,8 @@ export function ChatPanel({ width = 320 }: { width?: number }) {
         <div className="space-y-3">
           {messages.length === 0 && (
             <p className="text-sm text-gray-400 dark:text-gray-500 text-center mt-8">
-              Claude Code yapınız hakkında sorular sorun.
-              Skill, command, agent oluşturmak için yardım alın.
+              Ask questions about your Claude Code project.
+              Get help creating skills, commands, and agents.
             </p>
           )}
           {messages.map((msg) => (
@@ -160,8 +163,7 @@ export function ChatPanel({ width = 320 }: { width?: number }) {
             className="w-full text-xs"
             disabled={isLoading}
             onClick={() => {
-              const summary = nodes.map((n) => `${n.data.nodeType}: ${n.data.label}`).join(', ');
-              setInput(`Mevcut yapımda ${nodes.length} node var (${summary}). Bu yapıyı geliştirmek için ne önerirsin? Eksik agent, skill, hook veya MCP server var mı?`);
+              setInput('Review my current project structure and suggest improvements. Are there any missing components, best practice violations, or optimization opportunities?');
             }}
           >
             💡 Suggest Improvements

@@ -3,6 +3,7 @@ import {
   createDefaultChef, createDefaultAgent, createDefaultSkill,
   createDefaultMcp, createDefaultHook, createDefaultRule,
   createDefaultMemory, createDefaultTool, createDefaultEnv,
+  createDefaultCommand,
 } from './templates';
 
 export interface ProjectTemplate {
@@ -193,6 +194,28 @@ $ARGUMENTS`,
         },
         x: 400, y: 600,
       },
+      {
+        type: 'command',
+        config: {
+          ...createDefaultCommand('review-pr'),
+          name: 'review-pr',
+          description: 'Review a pull request for quality, security, and conventions',
+          content: `# Review Pull Request
+
+Review the given PR or set of changes for:
+
+1. **Code Quality**: Readability, naming, DRY principles, error handling
+2. **Security**: Injection risks, auth issues, data exposure
+3. **Tests**: Coverage gaps, edge cases, missing assertions
+4. **Conventions**: Project patterns, commit messages, documentation
+
+If a PR URL is given, use the GitHub MCP to fetch PR details.
+Otherwise review the current branch diff against main.
+
+$ARGUMENTS`,
+        },
+        x: 100, y: 600,
+      },
     ],
     edges: [
       { sourceIdx: 1, targetIdx: 0 }, // code-reviewer → chef
@@ -203,6 +226,7 @@ $ARGUMENTS`,
       { sourceIdx: 6, targetIdx: 1 }, // github mcp → code-reviewer
       { sourceIdx: 7, targetIdx: 0 }, // prettier hook → chef
       { sourceIdx: 8, targetIdx: 0 }, // testing rule → chef
+      { sourceIdx: 9, targetIdx: 0 }, // review-pr command → chef
     ],
   },
   {

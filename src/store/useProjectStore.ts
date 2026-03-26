@@ -294,6 +294,13 @@ function applyConnectionSideEffect(
       rebuildAgentPersona(targetNode.id, get);
     }, 0);
   }
+
+  // Auto-update chef persona when agents/skills connect to it
+  if (targetType === 'chef') {
+    setTimeout(() => {
+      rebuildChefPersona(targetNode.id, get);
+    }, 0);
+  }
 }
 
 // --- Rebuild agent persona based on all connections ---
@@ -355,4 +362,98 @@ function rebuildAgentPersona(
   if (newPersona !== agent.persona) {
     get().updateNodeConfig(agentId, { persona: newPersona } as Partial<AgentData>);
   }
+}
+
+// --- Rebuild chef persona based on all connections ---
+function rebuildChefPersona(
+  chefId: string,
+  get: () => ProjectStore,
+) {
+  const { nodes, edges } = get();
+  const chefNode = nodes.find((n) => n.id === chefId);
+  if (!chefNode) return;
+
+  const chef = chefNode.data.config as import('@/lib/types').ChefData;
+  const incoming = edges
+    .filter((e) => e.target === chefId)
+    .map((e) => nodes.find((n) => n.id === e.source))
+    .filter(Boolean) as AppNode[];
+
+  const agents = incoming.filter((n) => n.data.nodeType === 'agent');
+  const teams = incoming.filter((n) => n.data.nodeType === 'team');
+  const skills = incoming.filter((n) => n.data.nodeType === 'skill');
+  const commands = incoming.filter((n) => n.data.nodeType === 'command');
+  const mcps = incoming.filter((n) => n.data.nodeType === 'mcp');
+  const hooks = incoming.filter((n) => n.data.nodeType === 'hook');
+  const rules = incoming.filter((n) => n.data.nodeType === 'rule');
+
+  const AUTO_MARKER = '\n\n---\n<!-- auto-generated: connections -->';
+  const userContent = chef.persona.split(AUTO_MARKER)[0].trim();
+
+  const sections: string[] = [];
+
+  if (agents.length > 0) {
+    sections.push(`## Agents\n${agents.map((a) => {
+      const agentCfg = a.data.config as AgentData;
+      return `- **${agentCfg.name}**: ${agentCfg.description || 'No description'}`;
+    }).join('\n')}`);
+  }
+  if (teams.length > 0) {
+    sections.push(`## Teams\n${teams.map((t) => `- **${(t.data.config as TeamData).name}**`).join('\n')}`);
+  }
+  if (skills.length > 0) {
+    sections.push(`## Skills\n${skills.map((s) => `- **${(s.data.config as SkillData).name}**: ${(s.data.config as SkillData).description}`).join('\n')}`);
+  }
+  if (commands.length > 0) {
+    sections.push(`## Commands\n${commands.map((c) => `- \`/${(c.data.config as CommandData).name}\`: ${(c.data.config as CommandData).description}`).join('\n')}`);
+  }
+  if (mcps.length > 0) {
+    sections.push(`## MCP Servers\n${mcps.map((m) => `- **${(m.data.config as McpData).serverName}** (\`${(m.data.config as McpData).type}\`)`).join('\n')}`);
+  }
+  if (hooks.length > 0) {
+    sections.push(`## Hooks\n${hooks.map((h) => `- \`${(h.data.config as HookData).event}\` → ${(h.data.config as HookData).hookType}`).join('\n')}`);
+  }
+  if (rules.length > 0) {
+    sections.push(`## Rules\n${rules.map((r) => `- ${r.data.label}`).join('\n')}`);
+  }
+
+  if (sections.length === 0) return;
+
+  const autoContent = `${AUTO_MARKER}\n\n${sections.join('\n\n')}`;
+  const newPersona = `${userContent}${autoContent}`;
+
+  if (newPersona !== chef.persona) {
+    get().updateNodeConfig(chefId, { persona: newPersona } as Partial<import('@/lib/types').ChefData>);
+  }
+}
+
+// --- Rebuild all connections and personas after template load ---
+export function rebuildAllPersonas() {
+  const get = () => useProjectStore.getState();
+  const set = (partial: Partial<ProjectStore> | ((state: ProjectStore) => Partial<ProjectStore>)) => {
+    useProjectStore.setState(partial as Partial<ProjectStore>);
+  };
+
+  // First, replay all connection side effects so agent configs
+  // (skillNames, mcpServerNames, hooks, etc.) are populated
+  const { nodes, edges } = get();
+  edges.forEach((edge) => {
+    const sourceNode = nodes.find((n) => n.id === edge.source);
+    const targetNode = nodes.find((n) => n.id === edge.target);
+    if (sourceNode && targetNode) {
+      applyConnectionSideEffect(sourceNode, targetNode, get, set);
+    }
+  });
+
+  // Then rebuild all personas (after side effects settle)
+  setTimeout(() => {
+    const latest = get();
+    latest.nodes
+      .filter((n) => n.data.nodeType === 'agent')
+      .forEach((n) => rebuildAgentPersona(n.id, get));
+
+    latest.nodes
+      .filter((n) => n.data.nodeType === 'chef')
+      .forEach((n) => rebuildChefPersona(n.id, get));
+  }, 10);
 }

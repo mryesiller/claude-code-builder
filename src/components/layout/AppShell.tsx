@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { FileTree } from '@/components/tree/FileTree';
 import { NodePalette } from '@/components/layout/NodePalette';
 import { CanvasFlow } from '@/components/canvas/CanvasFlow';
-import { ChatPanel } from '@/components/chat/ChatPanel';
+// ChatPanel hidden from dashboard for now — kept in repo for future use
+// import { ChatPanel } from '@/components/chat/ChatPanel';
 import { NodeEditorDialog } from '@/components/editors/NodeEditorDialog';
 import { Toolbar } from '@/components/layout/Toolbar';
 import { ResizeHandle } from '@/components/layout/ResizeHandle';
@@ -20,11 +21,8 @@ export function AppShell() {
 
   const [leftW, setLeftW] = useState(260);
   const [paletteW, setPaletteW] = useState(200);
-  const [rightW, setRightW] = useState(320);
-
   const resizeLeft = useCallback((d: number) => setLeftW((w) => clamp(w + d)), []);
   const resizePalette = useCallback((d: number) => setPaletteW((w) => clamp(w + d)), []);
-  const resizeRight = useCallback((d: number) => setRightW((w) => clamp(w + d)), []);
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
@@ -37,8 +35,9 @@ export function AppShell() {
         <div className="flex-1 relative min-w-[200px]">
           <CanvasFlow />
         </div>
-        <ResizeHandle side="right" onResize={resizeRight} />
-        <ChatPanel width={rightW} />
+        {/* ChatPanel hidden — uncomment to re-enable */}
+        {/* <ResizeHandle side="right" onResize={resizeRight} />
+        <ChatPanel width={rightW} /> */}
       </div>
       <NodeEditorDialog />
     </div>

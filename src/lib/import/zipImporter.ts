@@ -126,6 +126,17 @@ export async function importFromZip(file: File): Promise<ImportResult> {
     const skillNode = createNode('skill', skillConfig, xOffset, yOffset);
     nodes.push(skillNode);
 
+    // Connect skill to agent that references it, or to chef
+    const targetAgent = nodes.find(
+      (n) => n.data.nodeType === 'agent' && (n.data.config as AgentData).skillNames.includes(skillConfig.name)
+    );
+    const targetId = targetAgent?.id || chefNode.id;
+    edges.push({
+      id: `edge_${skillNode.id}_${targetId}`,
+      source: skillNode.id,
+      target: targetId,
+    });
+
     xOffset += 300;
     if (xOffset > 900) { xOffset = 100; yOffset += 200; }
   }
@@ -146,6 +157,13 @@ export async function importFromZip(file: File): Promise<ImportResult> {
     };
     const cmdNode = createNode('command', cmdConfig, xOffset, yOffset);
     nodes.push(cmdNode);
+
+    // Connect command to chef
+    edges.push({
+      id: `edge_${cmdNode.id}_${chefNode.id}`,
+      source: cmdNode.id,
+      target: chefNode.id,
+    });
 
     xOffset += 300;
     if (xOffset > 900) { xOffset = 100; yOffset += 200; }
@@ -173,11 +191,15 @@ export async function importFromZip(file: File): Promise<ImportResult> {
           const mcpNode = createNode('mcp', mcpData, xOffset, yOffset);
           nodes.push(mcpNode);
 
-          // Connect to chef
+          // Connect MCP to agent that references it, or to chef
+          const mcpTargetAgent = nodes.find(
+            (n) => n.data.nodeType === 'agent' && (n.data.config as AgentData).mcpServerNames.includes(serverName)
+          );
+          const mcpTargetId = mcpTargetAgent?.id || chefNode.id;
           edges.push({
-            id: `edge_${mcpNode.id}_${chefNode.id}`,
+            id: `edge_${mcpNode.id}_${mcpTargetId}`,
             source: mcpNode.id,
-            target: chefNode.id,
+            target: mcpTargetId,
           });
 
           xOffset += 300;

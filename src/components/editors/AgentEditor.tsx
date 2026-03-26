@@ -183,17 +183,17 @@ export function AgentEditor({ nodeId }: { nodeId: string }) {
             {connectedNodes.map(({ edge, node: cn }) => (
               <div
                 key={edge.id}
-                className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-gray-50"
+                className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{NODE_TYPES[cn.data.nodeType].icon}</span>
                   <div>
-                    <p className="text-sm font-medium text-gray-800">{cn.data.label}</p>
-                    <p className="text-xs text-gray-500">{NODE_TYPES[cn.data.nodeType].label} &middot; {edge.source === nodeId ? 'outgoing' : 'incoming'}</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{cn.data.label}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{NODE_TYPES[cn.data.nodeType].label} &middot; {edge.source === nodeId ? 'outgoing' : 'incoming'}</p>
                   </div>
                 </div>
                 <button
-                  className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded"
+                  className="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 px-2 py-1 rounded"
                   onClick={() => {
                     removeEdge(edge.id);
                     // Also clean up config arrays

@@ -162,6 +162,7 @@ export interface HookData {
   statusMessage?: string;
   async?: boolean;
   model?: string;
+  headers?: Record<string, string>;
 }
 
 export interface MemoryData {
