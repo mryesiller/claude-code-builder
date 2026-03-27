@@ -20,7 +20,7 @@ export function AppShell() {
   useEffect(() => { initTheme(); }, [initTheme]);
 
   const [leftW, setLeftW] = useState(260);
-  const [paletteW, setPaletteW] = useState(240);
+  const [paletteW, setPaletteW] = useState(280);
   const resizeLeft = useCallback((d: number) => setLeftW((w) => clamp(w + d)), []);
   const resizePalette = useCallback((d: number) => setPaletteW((w) => clamp(w + d)), []);
 

@@ -71,8 +71,7 @@ export const useProjectStore = create<ProjectStore>()(temporal((set, get) => ({
   // --- Project ---
   projectName: 'my-project',
   setProjectName: (name) => {
-    set({ projectName: name });
-    // Sync with Chef node's projectName so file tree root updates
+    // Sync toolbar projectName AND Chef node's projectName in one atomic update
     const { nodes } = get();
     const chefNode = nodes.find((n) => n.data.nodeType === 'chef');
     if (chefNode) {
@@ -81,7 +80,9 @@ export const useProjectStore = create<ProjectStore>()(temporal((set, get) => ({
           ? { ...n, data: { ...n.data, config: { ...n.data.config, projectName: name } } }
           : n
       );
-      set({ nodes: updated });
+      set({ projectName: name, nodes: updated });
+    } else {
+      set({ projectName: name });
     }
   },
 
