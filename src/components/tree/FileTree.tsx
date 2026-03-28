@@ -60,7 +60,7 @@ function TreeNode({ entry, depth = 0, onFileClick }: { entry: TreeEntry; depth?:
   );
 }
 
-export function FileTree({ width = 260 }: { width?: number }) {
+export function FileTree({ width = 260, fullScreen = false }: { width?: number; fullScreen?: boolean }) {
   const tree = useFileTree();
   const [previewFile, setPreviewFile] = useState<TreeEntry | null>(null);
   const [copied, setCopied] = useState(false);
@@ -78,8 +78,13 @@ export function FileTree({ width = 260 }: { width?: number }) {
   }, [previewFile]);
 
   return (
-    <div className="border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-col flex-shrink-0" style={{ width }}>
-      <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+    <div
+      className={`bg-white dark:bg-gray-900 flex flex-col ${
+        fullScreen ? 'w-full h-full' : 'border-r border-gray-200 dark:border-gray-700 flex-shrink-0'
+      }`}
+      style={fullScreen ? undefined : { width }}
+    >
+      <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 shrink-0">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">File Structure</h2>
       </div>
       <ScrollArea className="flex-1">
@@ -89,7 +94,7 @@ export function FileTree({ width = 260 }: { width?: number }) {
       </ScrollArea>
 
       <Dialog open={!!previewFile} onOpenChange={(open) => { if (!open) { setPreviewFile(null); setCopied(false); } }}>
-        <DialogContent className="max-w-3xl w-[80vw] max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl w-[calc(100%-1rem)] md:w-[80vw] max-h-[85vh] md:max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center justify-between pr-8">
               <DialogTitle className="flex items-center gap-2 font-mono text-sm">

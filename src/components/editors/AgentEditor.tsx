@@ -35,7 +35,7 @@ export function AgentEditor({ nodeId }: { nodeId: string }) {
 
   return (
     <Tabs defaultValue="general" className="space-y-4">
-      <TabsList className="flex-wrap">
+      <TabsList className="flex-nowrap overflow-x-auto md:flex-wrap">
         <TabsTrigger value="general">General</TabsTrigger>
         <TabsTrigger value="persona">Persona</TabsTrigger>
         <TabsTrigger value="tools">Tools</TabsTrigger>

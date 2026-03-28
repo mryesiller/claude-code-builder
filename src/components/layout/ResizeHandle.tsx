@@ -17,6 +17,12 @@ export function ResizeHandle({ side, onResize }: ResizeHandleProps) {
     setIsDragging(true);
   }, []);
 
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    lastX.current = touch.clientX;
+    setIsDragging(true);
+  }, []);
+
   useEffect(() => {
     if (!isDragging) return;
 
@@ -26,16 +32,27 @@ export function ResizeHandle({ side, onResize }: ResizeHandleProps) {
       onResize(side === 'right' ? -delta : delta);
     };
 
-    const onMouseUp = () => setIsDragging(false);
+    const onTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      const delta = touch.clientX - lastX.current;
+      lastX.current = touch.clientX;
+      onResize(side === 'right' ? -delta : delta);
+    };
+
+    const onEnd = () => setIsDragging(false);
 
     document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchmove', onTouchMove, { passive: true });
+    document.addEventListener('touchend', onEnd);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
 
     return () => {
       document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('mouseup', onEnd);
+      document.removeEventListener('touchmove', onTouchMove);
+      document.removeEventListener('touchend', onEnd);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
@@ -46,6 +63,7 @@ export function ResizeHandle({ side, onResize }: ResizeHandleProps) {
       className={`w-1 cursor-col-resize hover:bg-blue-400 transition-colors flex-shrink-0
         ${isDragging ? 'bg-blue-500' : 'bg-transparent hover:bg-blue-300 dark:hover:bg-blue-600'}`}
       onMouseDown={onMouseDown}
+      onTouchStart={onTouchStart}
     />
   );
 }

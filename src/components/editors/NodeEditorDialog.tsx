@@ -40,7 +40,7 @@ export function NodeEditorDialog() {
 
   return (
     <Dialog open={!!selectedNodeId} onOpenChange={(open) => !open && setSelectedNodeId(null)}>
-      <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl w-[calc(100%-1rem)] md:w-[90vw] max-h-[85vh] md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span>{nodeConfig.icon}</span>

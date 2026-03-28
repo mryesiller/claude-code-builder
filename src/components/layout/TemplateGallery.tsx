@@ -78,11 +78,11 @@ export function TemplateGallery() {
       >
         Templates
       </DialogTrigger>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl w-[calc(100%-1rem)] md:w-auto max-h-[85vh] md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Project Templates</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-4 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mt-4">
           {PROJECT_TEMPLATES.map((template) => (
             <TemplateCard
               key={template.id}

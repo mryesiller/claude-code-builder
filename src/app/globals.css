@@ -123,6 +123,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
   }
   html {
     @apply font-sans;

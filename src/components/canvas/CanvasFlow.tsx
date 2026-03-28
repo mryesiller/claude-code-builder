@@ -18,6 +18,7 @@ import '@xyflow/react/dist/style.css';
 import { nodeTypes } from './nodes';
 import { DeletableEdge } from './DeletableEdge';
 import { NodeContextMenu, useContextMenu } from './NodeContextMenu';
+import { MobileNodeActions } from './MobileNodeActions';
 
 const edgeTypes = { deletable: DeletableEdge };
 import { useProjectStore, type AppNode, type AppEdge } from '@/store/useProjectStore';
@@ -28,10 +29,12 @@ import { NODE_TYPES } from '@/lib/constants';
 import { getLayoutedElements } from '@/hooks/useAutoLayout';
 import { getNextId } from '@/lib/templates';
 import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 function CanvasFlowInner() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition, fitView } = useReactFlow();
+  const isMobile = useIsMobile();
 
   const nodes = useProjectStore((s) => s.nodes);
   const edges = useProjectStore((s) => s.edges);
@@ -169,15 +172,19 @@ function CanvasFlowInner() {
         proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} className="!text-gray-300 dark:!text-gray-700" />
-        <Controls className="!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-600 !rounded-lg !shadow-sm [&>button]:!bg-white dark:[&>button]:!bg-gray-800 [&>button]:!border-gray-200 dark:[&>button]:!border-gray-600 [&>button]:!text-gray-700 dark:[&>button]:!text-gray-200 [&>button]:hover:!bg-gray-100 dark:[&>button]:hover:!bg-gray-700 [&_svg]:!fill-gray-700 dark:[&_svg]:!fill-gray-200" />
-        <MiniMap
-          nodeStrokeWidth={3}
-          className="!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-600 !rounded-lg !shadow-sm"
-          maskColor="rgba(0,0,0,0.08)"
-        />
+        {!isMobile && (
+          <Controls className="!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-600 !rounded-lg !shadow-sm [&>button]:!bg-white dark:[&>button]:!bg-gray-800 [&>button]:!border-gray-200 dark:[&>button]:!border-gray-600 [&>button]:!text-gray-700 dark:[&>button]:!text-gray-200 [&>button]:hover:!bg-gray-100 dark:[&>button]:hover:!bg-gray-700 [&_svg]:!fill-gray-700 dark:[&_svg]:!fill-gray-200" />
+        )}
+        {!isMobile && (
+          <MiniMap
+            nodeStrokeWidth={3}
+            className="!bg-white dark:!bg-gray-800 !border !border-gray-200 dark:!border-gray-600 !rounded-lg !shadow-sm"
+            maskColor="rgba(0,0,0,0.08)"
+          />
+        )}
 
         {/* Canvas toolbar */}
-        <Panel position="top-right" className="flex gap-2">
+        <Panel position={isMobile ? 'top-left' : 'top-right'} className="flex gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -204,18 +211,22 @@ function CanvasFlowInner() {
               <p className="text-3xl mb-3">🏗️</p>
               <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-1">Canvas Empty</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Drag nodes from the left panel and drop them here.
-                Start with a Chef node to build your Claude Code structure.
+                {isMobile
+                  ? 'Tap the + button to add your first node. Start with a Chef node to build your Claude Code structure.'
+                  : 'Drag nodes from the left panel and drop them here. Start with a Chef node to build your Claude Code structure.'}
               </p>
             </div>
           </Panel>
         )}
       </ReactFlow>
-      <NodeContextMenu
-        nodeId={contextMenu.nodeId}
-        position={contextMenu.position}
-        onClose={closeContextMenu}
-      />
+      {isMobile && <MobileNodeActions />}
+      {!isMobile && (
+        <NodeContextMenu
+          nodeId={contextMenu.nodeId}
+          position={contextMenu.position}
+          onClose={closeContextMenu}
+        />
+      )}
     </div>
   );
 }

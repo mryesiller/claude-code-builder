@@ -10,12 +10,15 @@ import { NodeEditorDialog } from '@/components/editors/NodeEditorDialog';
 import { Toolbar } from '@/components/layout/Toolbar';
 import { ResizeHandle } from '@/components/layout/ResizeHandle';
 import { useThemeStore } from '@/hooks/useTheme';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { MobileShell } from '@/components/layout/MobileShell';
 
 const MIN_PANEL = 120;
 const MAX_PANEL = 500;
 const clamp = (v: number) => Math.max(MIN_PANEL, Math.min(MAX_PANEL, v));
 
 export function AppShell() {
+  const isMobile = useIsMobile();
   const initTheme = useThemeStore((s) => s.initTheme);
   useEffect(() => { initTheme(); }, [initTheme]);
 
@@ -23,6 +26,8 @@ export function AppShell() {
   const [paletteW, setPaletteW] = useState(280);
   const resizeLeft = useCallback((d: number) => setLeftW((w) => clamp(w + d)), []);
   const resizePalette = useCallback((d: number) => setPaletteW((w) => clamp(w + d)), []);
+
+  if (isMobile) return <MobileShell />;
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-950">

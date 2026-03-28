@@ -43,7 +43,7 @@ export function ValidationPanel() {
         {warningCount > 0 && <Badge className="mr-1 text-xs px-1.5 bg-amber-500">{warningCount}</Badge>}
         {warnings.length === 0 ? 'Valid' : `${warnings.length} issues`}
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg w-[calc(100%-1rem)] md:w-auto max-h-[85vh] md:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Validation ({warnings.length} issues)</DialogTitle>
         </DialogHeader>

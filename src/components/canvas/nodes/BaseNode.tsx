@@ -66,9 +66,9 @@ function BaseNodeComponent({ id, data, selected, children }: BaseNodeProps) {
       `}
       onDoubleClick={() => setSelectedNodeId(id)}
     >
-      {/* Delete button */}
+      {/* Delete button — always visible on touch devices */}
       <button
-        className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover/node:opacity-100 transition-opacity hover:bg-red-600 z-10 shadow-sm"
+        className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover/node:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity hover:bg-red-600 z-10 shadow-sm"
         onClick={(e) => { e.stopPropagation(); removeNode(id); }}
         title="Delete node"
       >
@@ -112,7 +112,8 @@ function BaseNodeComponent({ id, data, selected, children }: BaseNodeProps) {
           )}
 
           <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 select-none">
-            Double-click to edit
+            <span className="hidden [@media(hover:hover)]:inline">Double-click to edit</span>
+            <span className="[@media(hover:hover)]:hidden">Tap to edit</span>
           </p>
         </div>
       </div>
@@ -123,7 +124,7 @@ function BaseNodeComponent({ id, data, selected, children }: BaseNodeProps) {
           type="source"
           position={Position.Top}
           id="top-source"
-          className="!w-3.5 !h-3.5 !border-2 !border-white !-top-[7px]"
+          className="!w-3.5 !h-3.5 [@media(hover:none)]:!w-5 [@media(hover:none)]:!h-5 !border-2 !border-white !-top-[7px]"
           style={{ backgroundColor: config.color }}
         />
       )}
@@ -132,7 +133,7 @@ function BaseNodeComponent({ id, data, selected, children }: BaseNodeProps) {
           type="target"
           position={Position.Top}
           id="top-target"
-          className="!w-3.5 !h-3.5 !border-2 !border-white !-top-[7px]"
+          className="!w-3.5 !h-3.5 [@media(hover:none)]:!w-5 [@media(hover:none)]:!h-5 !border-2 !border-white !-top-[7px]"
           style={{ backgroundColor: config.color }}
         />
       )}
@@ -141,7 +142,7 @@ function BaseNodeComponent({ id, data, selected, children }: BaseNodeProps) {
           type="source"
           position={Position.Bottom}
           id="bottom-source"
-          className="!w-3.5 !h-3.5 !border-2 !border-white !-bottom-[7px]"
+          className="!w-3.5 !h-3.5 [@media(hover:none)]:!w-5 [@media(hover:none)]:!h-5 !border-2 !border-white !-bottom-[7px]"
           style={{ backgroundColor: config.color }}
         />
       )}
@@ -150,7 +151,7 @@ function BaseNodeComponent({ id, data, selected, children }: BaseNodeProps) {
           type="target"
           position={Position.Bottom}
           id="bottom-target"
-          className="!w-3.5 !h-3.5 !border-2 !border-white !-bottom-[7px]"
+          className="!w-3.5 !h-3.5 [@media(hover:none)]:!w-5 [@media(hover:none)]:!h-5 !border-2 !border-white !-bottom-[7px]"
           style={{ backgroundColor: config.color }}
         />
       )}
